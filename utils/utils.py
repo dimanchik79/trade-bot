@@ -36,8 +36,8 @@ class MainWindow:
         self.tree.heading("registration", text="REGISTRATION", anchor=W)
         self.tree.column("#1", stretch=YES, width=85, anchor=W)
         self.tree.column("#2", stretch=YES, width=85, anchor=W)
-        self.tree.column("#3", stretch=YES, width=180, anchor=W)
-        self.tree.column("#4", stretch=YES, width=120, anchor=W)
+        self.tree.column("#3", stretch=YES, width=190, anchor=W)
+        self.tree.column("#4", stretch=YES, width=110, anchor=W)
         self.tree.pack(side=LEFT)
         # self.tree.bind("<<TreeviewSelect>>", self.fonds_print_selection)
         scrollbar = ttk.Scrollbar(self.frame, orient=VERTICAL, command=self.tree.yview)
@@ -77,9 +77,9 @@ class MainWindow:
                 self.tree.delete(delete_row)
         users = CurrentUser.select()
         for user in users:
-            self.tree.insert("", END, iid=str(user.id), values=[user.chat_id, 
+            self.tree.insert("", END, iid=str(user.id), values=(user.chat_id, 
                                                                 user.user_id, 
                                                                 user.user_name, 
-                                                                str(user.enter_date)[:19]])
+                                                                str(user.enter_date)[:19], ))
         self.tree.selection_set(self.tree.get_children()[0])
         self.tree.focus(self.tree.get_children()[0])
