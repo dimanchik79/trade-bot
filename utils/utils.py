@@ -1,6 +1,5 @@
 from tkinter import *
 from tkinter import ttk
-from config import CHAT_ID
 from loader import bot
 from database.models import CurrentUser
 import threading
@@ -12,6 +11,7 @@ class MainWindow:
     def __init__(self):
         self.root = Tk()
         self.bg = "CadetBlue"
+        self.tree = None
         
     def window_show(self):
         self.root.title("Bot Master")

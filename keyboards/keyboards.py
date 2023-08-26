@@ -2,7 +2,7 @@ from loader import bot
 from database.models import CurrentUser
 from datetime import datetime
 from telebot import types
-
+from config import HELP_TEXT
 
 @bot.message_handler(commands=['start'])
 def users_registtration(message) -> None:
@@ -13,7 +13,7 @@ def users_registtration(message) -> None:
     markup = types.InlineKeyboardMarkup()
     markup.add(types.InlineKeyboardButton('Вывести справку по командам бота?', callback_data="help"))
     user = [name for name in CurrentUser.select().where(CurrentUser.user_id == user_id)]
-    if not user is []:
+    if user != []:
         bot.send_message(chat_id, f"С возвращением, <b>{user_name}</b>!!!", parse_mode='html', reply_markup=markup)
     else:
         CurrentUser.create(chat_id=chat_id, user_id=user_id, user_name=user_name, enter_date=str(datetime.now()))
@@ -23,20 +23,15 @@ def users_registtration(message) -> None:
    
 @bot.message_handler(commands=['help'])
 def help_command(message) -> None:
-    markup = types.InlineKeyboardMarkup()
     # # btn3 = types.InlineKeyboardButton('/low')
     # # btn4 = types.InlineKeyboardButton('/hight')
     # # btn5 = types.InlineKeyboardButton('/custom')
     # # btn6 = types.InlineKeyboardButton('/history')
     # # btn7 = types.InlineKeyboardButton('/leavebot')
-    markup.add(types.InlineKeyboardButton('start', callback_data='send_help_start'), 
-               types.InlineKeyboardButton('help', url='www.ya.ru'))
-    bot.send_message(message.chat.id, "Вот список команд бота", reply_markup=markup)
+    bot.send_message(message.chat.id, HELP_TEXT, parse_mode='html')
 
     
 @bot.callback_query_handler(func=lambda callback: True)
 def callback_message(callback):
     if callback.data == 'help':
        help_command(callback.message)
-    if callback.data == 'send_help_start':
-       bot.send_message(callback.message.chat.id, "Справка по команде start")
