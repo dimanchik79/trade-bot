@@ -4,6 +4,7 @@ from datetime import datetime
 from telebot import types
 from config import HELP_TEXT
 
+
 @bot.message_handler(commands=['start'])
 def users_registtration(message) -> None:
     """Обработка команды /start. Регистрация новых пользователей бота"""
@@ -23,15 +24,22 @@ def users_registtration(message) -> None:
    
 @bot.message_handler(commands=['help'])
 def help_command(message) -> None:
-    # # btn3 = types.InlineKeyboardButton('/low')
-    # # btn4 = types.InlineKeyboardButton('/hight')
-    # # btn5 = types.InlineKeyboardButton('/custom')
-    # # btn6 = types.InlineKeyboardButton('/history')
-    # # btn7 = types.InlineKeyboardButton('/leavebot')
+    if filter_unregistred_users(message) == True:
+        return
     bot.send_message(message.chat.id, HELP_TEXT, parse_mode='html')
 
     
 @bot.callback_query_handler(func=lambda callback: True)
 def callback_message(callback):
     if callback.data == 'help':
-       help_command(callback.message)
+        help_command(callback.message)
+
+       
+def filter_unregistred_users(msg) -> bool:
+    chat_id = msg.chat.id
+    user = [name for name in CurrentUser.select().where(CurrentUser.chat_id == chat_id)]
+    if user == []:
+        bot.send_message(chat_id, "Вы не зарегистрированы в системе.\nВыполните команду /start")
+        return True
+    else:
+        return False        

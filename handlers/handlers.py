@@ -1,5 +1,6 @@
 from keyboards.keyboards import *
 
+
 @bot.message_handler(content_types=["text"])
 def message_users(message) -> None:
     """Отслеживание сообщений пользователя"""
