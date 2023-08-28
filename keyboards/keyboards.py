@@ -29,13 +29,14 @@ def help_command(message) -> None:
     bot.send_message(message.chat.id, HELP_TEXT, parse_mode='html')
 
     
-@bot.callback_query_handler(func=lambda callback: True)
-def callback_message(callback):
+@bot.callback_query_handler(func=lambda callback: True) 
+def callback_message(callback) -> None:
     if callback.data == 'help':
         help_command(callback.message)
 
        
 def filter_unregistred_users(msg) -> bool:
+    """Функция определяет зарегистрирован ли пользовтель или нет"""
     chat_id = msg.chat.id
     user = [name for name in CurrentUser.select().where(CurrentUser.chat_id == chat_id)]
     if user == []:
