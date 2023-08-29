@@ -15,3 +15,12 @@ class CurrentUser(BaseModel):
     user_name = CharField(max_length=250)
     enter_date = DateTimeField()
     
+    
+class History(BaseModel):
+    chat_id = IntegerField()
+    user_name = CharField(max_length=250)
+    enter_date = DateTimeField()
+    command = CharField(max_length=10)
+    result = CharField(max_length=2048)
+    
+    

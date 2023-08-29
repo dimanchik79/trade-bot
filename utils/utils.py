@@ -71,12 +71,12 @@ class MainWindow:
         
     def fill_tree(self) -> None:
         """Метод заполняет виджет treeview из CurrentUser"""
+        for delete_row in self.tree.get_children():
+                self.tree.delete(delete_row)
         users = [user for user in CurrentUser.select()]
         if users == []:
             return
         else:
-            for delete_row in self.tree.get_children():
-                self.tree.delete(delete_row)
             for user in users:
                 self.tree.insert("", END, iid=str(user.id), values=(user.chat_id, 
                                                                     user.user_id, 
