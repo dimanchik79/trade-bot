@@ -4,10 +4,12 @@ from handlers.handlers import *
 from loader import *
 from utils.utils import *
 import database.models
+from telebot import custom_filters
 
 
 def start_bot() -> None:
-    bot.infinity_polling(none_stop=True, skip_pending=True)
+    bot.add_custom_filter(custom_filters.StateFilter(bot))
+    bot.infinity_polling(skip_pending=True)
 
 
 def main() -> None:

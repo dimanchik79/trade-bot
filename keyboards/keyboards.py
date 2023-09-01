@@ -41,7 +41,7 @@ def help_command(message) -> None:
         return
     bot.send_message(message.chat.id, HELP_TEXT, parse_mode='html')
 
-    
+
 @bot.callback_query_handler(func=lambda callback: True) 
 def callback_message(callback) -> None:
     """Callbacks на кнопки"""
@@ -66,4 +66,4 @@ def filter_unregistred_users(msg) -> bool:
         bot.send_message(chat_id, "Вы не зарегистрированы в системе.\nВыполните команду /start")
         return True
     else:
-        return False        
+        return False
