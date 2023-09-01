@@ -7,7 +7,7 @@ import database.models
 
 
 def start_bot() -> None:
-    bot.polling(none_stop=True)
+    bot.infinity_polling(none_stop=True, skip_pending=True)
 
 
 def main() -> None:

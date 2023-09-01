@@ -25,6 +25,8 @@ def users_registtration(message) -> None:
 @bot.message_handler(commands=['leavebot'])
 def users_registtration(message) -> None:
     """Обработка команды leavebot"""
+    if filter_unregistred_users(message):
+        return
     markup = types.InlineKeyboardMarkup()
     btn_no = types.InlineKeyboardButton('Нет', callback_data="no_exit")
     btn_yes = types.InlineKeyboardButton('Да', callback_data="yes_exit")
