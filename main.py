@@ -21,5 +21,5 @@ def main() -> None:
 if __name__ == "__main__":
     if not path.exists('database/bot_base.db'):
         database.models.CurrentUser.create_table()
-        database.models.History.create_table()     
+        database.models.History.create_table()
     main()
