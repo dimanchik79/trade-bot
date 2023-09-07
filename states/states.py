@@ -89,25 +89,46 @@ def finish_get(message: object) -> None:
     for key, value in unique_adds.items():
         stations.extend([key, value])
     bot.send_message(message.chat.id, "Немножко подождем...")
+   
+    #Делаем запрос к серверу и парсим ответ 
     querystring = {'service': 'tutu_trains',
                 'term': stations[1],
                 'term2': stations[3]}
     parse = requests.get(URL, params=querystring)
     parse_text = parse.text
     parse = dict(parse.json())
-    direct_count = []
     stations_count = parse_text.count("arrivalStation", 0)
-    print(stations_count)
+    
     for count in range(stations_count):
-        direct_count.append(parse['trips'][count])
-        print('-------', parse['trips'][count])
+        # direct_count.append(parse['trips'][count])
+        name = None if parse['trips'][count]['name'] in ('', None) else parse['trips'][count]['name']
+        departure_station = f"{find_station_name(parse['trips'][count]['departureStation'])} ({parse['trips'][count]['departureStation']})"
+        arrival_station = f"{find_station_name(parse['trips'][count]['arrivalStation'])} ({parse['trips'][count]['arrivalStation']})"
+        run_departure_station = f"{find_station_name(parse['trips'][count]['runDepartureStation'])} ({parse['trips'][count]['runDepartureStation']})"
+        run_arrival_station = f"{find_station_name(parse['trips'][count]['runArrivalStation'])} ({parse['trips'][count]['runArrivalStation']})"
+        departure_time = f"{parse['trips'][count]['departureTime']} (мск)"
+        arrival_time = f"{parse['trips'][count]['arrivalTime']} (мск)"
+        train_number = parse['trips'][count]['trainNumber']
+        firm = "нет" if parse['trips'][count]['trainNumber'] == False else parse['trips'][count]['trainNumber'] == True
+                             
+        print(f""""{name} 
+              {departure_station} 
+              {arrival_station} 
+              {run_departure_station} 
+              {run_arrival_station} 
+              {departure_time}
+              {arrival_time}
+              """)
         
+    
     bot.delete_state(message.from_user.id, message.chat.id)
-
-
+   
+    
 @bot.message_handler(state="*", commands=['cancel'])
 def any_state(message: object) -> None:
     """Отмена ввода"""
+    global command
+    command = message.text
     bot.send_message(message.chat.id, "Ввод отменен")
     bot.delete_state(message.from_user.id, message.chat.id)
     
@@ -117,6 +138,8 @@ def direct_departure(message: object) -> None:
     """Обработка команды-состояния direct"""
     if filter_unregistred_users(message):
         return
+    global command
+    command = message.text
     bot.set_state(message.from_user.id, MyDirect.direct_departure, message.chat.id)
     bot.send_message(message.chat.id, TEXT_TWO)
 
@@ -135,7 +158,7 @@ def direct_term_departure_get(message: object) -> None:
     
 
 def get_unique_adds(msg: object) -> dict:
-    """Функция проводит валидацию введенного кода"""
+    """Функция проводит валидацию введенного кода станции"""
     unique_adds = {}   
     if msg.text.isdigit() and len(msg.text) == 7:
         for row in Routes.select().where(Routes.departure_station_id == f"{msg.text}"):
@@ -158,3 +181,9 @@ def get_unique_adds(msg: object) -> dict:
             return {}
         else:
             return unique_adds
+        
+
+def find_station_name(station_id: str) -> str:
+    """Функция возвращает название станции по id"""
+    for row in Routes.select().where(Routes.departure_station_id == f"{station_id}"):
+        return f"{row.departure_station_name}"
