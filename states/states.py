@@ -2,14 +2,14 @@ from telebot.handler_backends import State, StatesGroup
 from loader import bot
 from keyboards.keyboards import filter_unregistred_users
 from database.routes import Routes
-from config import TEXT_ONE, TEXT_TWO
+from config import TEXT_ONE, TEXT_TWO, NAME_IMG, COST_LEVEL, VAGON
 import requests
 from config import URL
 import os
-import json
 
 
 command = ''
+
 
 class MyStates(StatesGroup):
     term_departure = State()
@@ -19,7 +19,7 @@ class MyDirect(StatesGroup):
     direct_departure = State()
 
 
-@bot.message_handler(commands=['low', 'midle', 'high'])
+@bot.message_handler(commands=['low', 'mid', 'high'])
 def start_departure(message: object) -> None:
     global command
     """Обработка команд-состояний"""
@@ -100,8 +100,7 @@ def finish_get(message: object) -> None:
     stations_count = parse_text.count("arrivalStation", 0)
     
     for count in range(stations_count):
-        # direct_count.append(parse['trips'][count])
-        name = None if parse['trips'][count]['name'] in ('', None) else parse['trips'][count]['name']
+        name = 'None' if parse['trips'][count]['name'] in ('', None) else parse['trips'][count]['name']
         departure_station = f"{find_station_name(parse['trips'][count]['departureStation'])} ({parse['trips'][count]['departureStation']})"
         arrival_station = f"{find_station_name(parse['trips'][count]['arrivalStation'])} ({parse['trips'][count]['arrivalStation']})"
         run_departure_station = f"{find_station_name(parse['trips'][count]['runDepartureStation'])} ({parse['trips'][count]['runDepartureStation']})"
@@ -109,18 +108,28 @@ def finish_get(message: object) -> None:
         departure_time = f"{parse['trips'][count]['departureTime']} (мск)"
         arrival_time = f"{parse['trips'][count]['arrivalTime']} (мск)"
         train_number = parse['trips'][count]['trainNumber']
-        firm = "нет" if parse['trips'][count]['trainNumber'] == False else parse['trips'][count]['trainNumber'] == True
-                             
-        print(f""""{name} 
-              {departure_station} 
-              {arrival_station} 
-              {run_departure_station} 
-              {run_arrival_station} 
-              {departure_time}
-              {arrival_time}
-              """)
+        firm = "ДА" if parse['trips'][count]['firm'] else "НЕТ"
+        travel_time = int(parse['trips'][count]['travelTimeInSeconds'])
+        travel_time = convert(travel_time)
+        categories = parse['trips'][count]['categories']
+        cost = []
+        for count in range(len(categories)):
+           cost.append([categories[count]['price'], categories[count]['type']])
+        cost = sorted(cost)                                   
+        bot.send_photo(message.chat.id, photo=open(NAME_IMG[name], 'rb'))
+        bot.send_message(message.chat.id, f"""<b>Имя поезда:</b> <i>{name if name != 'None' else 'БЕЗ НАЗВАНИЯ'}</i> 
+<b>Номер поезда:</b> <i>{train_number}</i>
+<b>Фирменный поезд:</b> <i>{firm}</i>
+<b>Станция отправления:</b> <i>{departure_station}</i> 
+<b>Станция прибытия:</b> <i>{arrival_station}</i>
+<b>Время отправления:</b> <i>{departure_time}</i>
+<b>Время прибытия:</b> <i>{arrival_time}</i>
+<b>Время следования:</b> <i>{travel_time}</i> 
+<b>Начальная станция:</b> <i>{run_departure_station}</i> 
+<b>Конечная станция:</b> <i>{run_arrival_station}</i>\n 
+<b>Цена билета в категории ({COST_LEVEL[f'{command}']}):</b> {get_cost(cost, command)}
+        """, parse_mode="html")
         
-    
     bot.delete_state(message.from_user.id, message.chat.id)
    
     
@@ -187,3 +196,28 @@ def find_station_name(station_id: str) -> str:
     """Функция возвращает название станции по id"""
     for row in Routes.select().where(Routes.departure_station_id == f"{station_id}"):
         return f"{row.departure_station_name}"
+    
+ 
+def convert(seconds: int) -> str:
+    """Функция преобразует время в секундах в hh:mm:ss"""
+    seconds = seconds % (24 * 3600)
+    hour = seconds // 3600
+    seconds %= 3600
+    minutes = seconds // 60
+    seconds %= 60
+    return "%02d:%02d:%02d" % (hour, minutes, seconds)
+
+
+def get_cost(diff_cost: list, comand_for: str) -> str:
+    """Функция определят какую цену возвращать, в зависимости от команды"""
+    print(diff_cost)
+    if comand_for == "/low":
+        return f"{VAGON[diff_cost[0][1]]}  - {diff_cost[0][0]} руб."
+    if comand_for == "/high":
+        return f"{VAGON[diff_cost[-1][1]]}  - {diff_cost[-1][0]} руб."
+    if comand_for == "/mid":
+        if len(diff_cost) < 3:
+            txt = f"средней цены нет. Вывожу самую низкую - {diff_cost[0][0]} руб."
+        for count in range(1, len(diff_cost) - 1):
+            txt = f"{VAGON[diff_cost[count][1]]}  - {diff_cost[count][0]} руб.\n"
+        return txt

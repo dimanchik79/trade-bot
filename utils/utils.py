@@ -38,7 +38,6 @@ class MainWindow:
         self.tree.column("#3", stretch=YES, width=190, anchor=W)
         self.tree.column("#4", stretch=YES, width=110, anchor=W)
         self.tree.pack(side=LEFT)
-        # self.tree.bind("<<TreeviewSelect>>", self.fonds_print_selection)
         scrollbar = ttk.Scrollbar(self.frame, orient=VERTICAL, command=self.tree.yview)
         self.tree["yscrollcommand"] = scrollbar.set
         scrollbar.pack(side="right", fill="y")
@@ -47,7 +46,7 @@ class MainWindow:
         self.send_entry.grid(column=0, pady=5, padx=5, row=4, sticky="ew", columnspan=1)
         btn_one = Button(self.root, text="Send Message", command=self.send_message)
         btn_one.grid(column=1, pady=5, padx=5, row=4, sticky="ew", columnspan=1)
-        Label(self.root, text="Trade Server status", bg=self.bg).grid(row=5, column=0, padx=5, sticky="w")              
+        Label(self.root, text="TuTu API Server status", bg=self.bg).grid(row=5, column=0, padx=5, sticky="w")              
         self.http_response = Label(self.root, bg='blue1')
         self.http_response.grid(row=6, column=0, padx=5, sticky="ew", columnspan=1)
         btn_get = Button(self.root, text="Get", command=self.get_status_api)
