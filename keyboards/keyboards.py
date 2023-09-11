@@ -1,5 +1,6 @@
 from loader import bot
 from database.models import CurrentUser
+from database.models import History
 from datetime import datetime
 from telebot import types
 from config import HELP_TEXT
@@ -16,13 +17,20 @@ def users_registtration(message) -> None:
     user = [name for name in CurrentUser.select().where(CurrentUser.user_id == user_id)]
     if user != []:
         bot.send_message(chat_id, f"С возвращением, <b>{user_name}</b>!!!", parse_mode='html', reply_markup=markup)
+        answer = "Greeting a user"
     else:
         CurrentUser.create(chat_id=chat_id, user_id=user_id, user_name=user_name, enter_date=str(datetime.now()))
         bot.send_message(chat_id, f"Привет, <b>{user_name}</b>!!! Ваш ID {user_id}", parse_mode='html')
         bot.send_message(chat_id, f"и Вы успешно зарегистрированы в системе!", parse_mode='html', reply_markup=markup)
+        answer = "Registred a new user"
+    History.create(chat_id=message.chat.id, 
+                    user_name=message.from_user.first_name, 
+                    date=str(datetime.now())[:18],
+                    command = "/start",
+                    result = f"{answer} {message.from_user.first_name}")
 
  
-@bot.message_handler(commands=['leavebot'])
+@bot.message_handler(commands=['exit'])
 def users_registtration(message) -> None:
     """Обработка команды leavebot"""
     if filter_unregistred_users(message):
@@ -32,7 +40,7 @@ def users_registtration(message) -> None:
     btn_yes = types.InlineKeyboardButton('Да', callback_data="yes_exit")
     markup.add(btn_no, btn_yes)
     bot.send_message(message.chat.id, f"Вы действительно желаете покинуть бот?", reply_markup=markup)
-
+   
    
 @bot.message_handler(commands=['help'])
 def help_command(message) -> None:
@@ -40,6 +48,11 @@ def help_command(message) -> None:
     if filter_unregistred_users(message):
         return
     bot.send_message(message.chat.id, HELP_TEXT, parse_mode='html')
+    History.create(chat_id=message.chat.id, 
+                    user_name=message.chat.username,
+                    date=str(datetime.now())[:18],
+                    command = "/help",
+                    result = f"Call help")
 
 
 @bot.callback_query_handler(func=lambda callback: True) 
@@ -55,6 +68,11 @@ def callback_message(callback) -> None:
             return
         else:
             CurrentUser.get(CurrentUser.chat_id == chat_id).delete_instance()
+            History.create(chat_id=callback.message.chat.id, 
+                user_name=callback.message.chat.username, 
+                date=str(datetime.now())[:18],
+                command = "/exit",
+                result = f"User {callback.message.chat.username} exit the chat")
             bot.send_message(chat_id, "Вы покинули бот...") 
 
 

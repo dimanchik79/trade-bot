@@ -1,5 +1,6 @@
 from keyboards.keyboards import *        
 from states.states import *
+from database.models import History
 
 
 @bot.message_handler(content_types=["text"])
@@ -13,5 +14,8 @@ def message_users(message) -> None:
         bot.reply_to(message, "И я Вас горячо приветствую!")
     else:
         bot.reply_to(message, "Я Вас не понимаю! Мой A.I. весьма ограничен(")
-
-
+    History.create(chat_id=message.chat.id, 
+                       user_name=message.chat.username, 
+                       date=str(datetime.now()),
+                       command = message.text,
+                       result = "text message")
