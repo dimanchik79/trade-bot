@@ -5,7 +5,7 @@ from database.models import History
 
 @bot.message_handler(content_types=["text"])
 def message_users(message) -> None:
-    """Отслеживание сообщений пользователя"""
+    """Отслеживание текстовых сообщений пользователя"""
     if filter_unregistred_users(message) == True:
         bot.reply_to(message, "Вы не можете писать сообщения. Зарегистрируйстсь, набрав команду /start")
         return       

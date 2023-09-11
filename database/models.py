@@ -1,5 +1,7 @@
 from peewee import *
 
+"""В модуле реализованы модели базы банных
+   с помощью библиотеки PEEWEE"""
 
 DB = SqliteDatabase('database/bot_base.db')
 

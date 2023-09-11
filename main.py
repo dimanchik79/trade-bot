@@ -8,11 +8,13 @@ from telebot import custom_filters
 
 
 def start_bot() -> None:
+    """Функция запускает бота и иницилизирует фильтры состояний бота"""
     bot.add_custom_filter(custom_filters.StateFilter(bot))
     bot.infinity_polling(skip_pending=True)
 
 
 def main() -> None:
+    """Функция запускает GUI в параллельном потоке""" 
     window = MainWindow()
     threading.Thread(target=start_bot, args=(), daemon=True).start()
     window.window_show()

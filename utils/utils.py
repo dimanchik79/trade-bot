@@ -6,13 +6,18 @@ import requests
 from config import URL
 
 class MainWindow:
-
+    """Класс обеспечивает работы графического интерфейса
+    root - userform Tk,
+    bg - background формы
+    tree - виджет ttk.TreeView
+    """
     def __init__(self):
         self.root = Tk()
         self.bg = "CadetBlue"
         self.tree = None
         
-    def window_show(self):
+    def window_show(self) -> None:
+        """Метод - конструктор формы Tk"""
         self.root.title("Bot Master")
         self.root.geometry("500x410")
         self.root.protocol("WM_DELETE_WINDOW", self.close_bot)
@@ -57,11 +62,13 @@ class MainWindow:
         self.root.mainloop()
     
     def close_bot(self):
+        """Метод закрывает ворму и останавливает бота"""
         print("Bot OFF...")
         bot.stop_polling()
         self.root.destroy()
     
     def send_message(self) -> None:
+        """Метод отсылает сообщение выбранному в TreeView пользователю"""
         items = self.tree.item(self.tree.focus())
         chat_id = items['values'][0]
         bot.send_message(chat_id, self.send_entry.get())
