@@ -14,7 +14,7 @@ def start_bot() -> None:
 
 
 def main() -> None:
-    """Функция запускает GUI в параллельном потоке""" 
+    """Функция запускает GUI и бота в отдельном потоке""" 
     window = MainWindow()
     threading.Thread(target=start_bot, args=(), daemon=True).start()
     window.window_show()

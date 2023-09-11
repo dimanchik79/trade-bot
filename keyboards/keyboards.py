@@ -7,7 +7,7 @@ from config import HELP_TEXT
 
 
 @bot.message_handler(commands=['start'])
-def users_registtration(message) -> None:
+def users_registtration(message: object) -> None:
     """Обработка команды /start. Регистрация новых пользователей бота"""
     user_id = message.from_user.id
     chat_id = message.chat.id
@@ -29,9 +29,34 @@ def users_registtration(message) -> None:
                     command = "/start",
                     result = f"{answer} {message.from_user.first_name}")
 
+    
+@bot.message_handler(commands=["history"])
+def message_users(message: object) -> None:
+    """Функция реализует команду бота history"""
+    if filter_unregistred_users(message):
+        return
+    rows = History.select().where(History.chat_id % f"*{message.chat.id}*").order_by(History.id.desc())
+    if len(rows) == 0:
+        bot.send_message(message.chat.id, "У Вас пока нет истории команд")
+        txt = "For this user not found statistic"
+    else:
+        count = 1
+        txt = f"<b>Вот Ваша история команд {message.chat.username}</b>\n"
+        for row in rows:
+            txt += f"<i>{count} --- {row.command} --- {row.date} --- {row.result}</i>\n"
+            count += 1
+            if count == 11:
+                break
+    bot.send_message(message.chat.id, txt, parse_mode="html")
+    History.create(chat_id=message.chat.id, 
+                    user_name=message.chat.username, 
+                    date=str(datetime.now())[:18],
+                    command = message.text,
+                    result = "See last 10 command statistic...")
+ 
  
 @bot.message_handler(commands=['exit'])
-def users_registtration(message) -> None:
+def users_registtration(message: object) -> None:
     """Обработка команды leavebot"""
     if filter_unregistred_users(message):
         return
@@ -43,7 +68,7 @@ def users_registtration(message) -> None:
    
    
 @bot.message_handler(commands=['help'])
-def help_command(message) -> None:
+def help_command(message: object) -> None:
     """Обработка команды help"""
     if filter_unregistred_users(message):
         return
@@ -56,7 +81,7 @@ def help_command(message) -> None:
 
 
 @bot.callback_query_handler(func=lambda callback: True) 
-def callback_message(callback) -> None:
+def callback_message(callback: object) -> None:
     """Callbacks на кнопки"""
     if callback.data == 'help':
         help_command(callback.message)
@@ -76,7 +101,7 @@ def callback_message(callback) -> None:
             bot.send_message(chat_id, "Вы покинули бот...") 
 
 
-def filter_unregistred_users(msg) -> bool:
+def filter_unregistred_users(msg: object) -> bool:
     """Функция определяет зарегистрирован ли пользовтель или нет"""
     chat_id = msg.chat.id
     user = [name for name in CurrentUser.select().where(CurrentUser.chat_id == chat_id)]
