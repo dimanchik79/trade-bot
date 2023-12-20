@@ -9,15 +9,14 @@ from config import URL
 import os
 from datetime import datetime
 
-
 command = ''
 
 
 class MyStates(StatesGroup):
     term_departure = State()
     term_arrival = State()
-    
-    
+
+
 class MyDirect(StatesGroup):
     direct_departure = State()
 
@@ -31,8 +30,8 @@ def start_departure(message: object) -> None:
     command = message.text
     bot.set_state(message.from_user.id, MyStates.term_departure, message.chat.id)
     bot.send_message(message.chat.id, TEXT_ONE, parse_mode='html')
- 
-     
+
+
 @bot.message_handler(state="*", commands=['cancel'])
 def any_state(message: object) -> None:
     """Отмена ввода"""
@@ -41,13 +40,13 @@ def any_state(message: object) -> None:
     command = message.text
     bot.send_message(message.chat.id, "Ввод отменен")
     bot.delete_state(message.from_user.id, message.chat.id)
-    History.create(chat_id=message.chat.id, 
-                user_name=message.from_user.first_name, 
-                date=str(datetime.now())[:18],
-                command = "/cancel",
-                result = f"Command {command_old}. The command is canceled")
-    
-       
+    History.create(chat_id=message.chat.id,
+                   user_name=message.from_user.first_name,
+                   date=str(datetime.now())[:18],
+                   command="/cancel",
+                   result=f"Command {command_old}. The command is canceled")
+
+
 @bot.message_handler(state=MyStates.term_departure)
 def term_departure_get(message: object) -> None:
     """Запрос ввода станции отправления"""
@@ -66,20 +65,20 @@ def term_departure_get(message: object) -> None:
         bot.send_message(message.chat.id, f"Станция отправления:\n")
         for key, value in unique_adds.items():
             bot.send_message(message.chat.id, f"{key} {value}")
-             
+
         with bot.retrieve_data(message.from_user.id, message.chat.id) as data:
             data['term_departure'] = [value for value in unique_adds.values()]
         bot.send_message(message.chat.id, 'Введите код или название станции прибытия\n/cancel - отмена ввода')
         bot.set_state(message.from_user.id, MyStates.term_arrival, message.chat.id)
- 
- 
+
+
 @bot.message_handler(state=MyStates.term_arrival)
 def finish_get(message: object) -> None:
     """Запрос ввода станции назначения"""
     unique_adds = get_unique_adds(message)
     if unique_adds == {}:
-         bot.set_state(message.from_user.id, MyStates.term_arrival, message.chat.id)
-         return
+        bot.set_state(message.from_user.id, MyStates.term_arrival, message.chat.id)
+        return
     elif len(unique_adds) > 1:
         msg = "Давайте уточним:\n"
         for key, value in unique_adds.items():
@@ -90,39 +89,39 @@ def finish_get(message: object) -> None:
     elif len(unique_adds) == 1:
         bot.send_message(message.chat.id, f"Станция прибытия:\n")
         for key, value in unique_adds.items():
-            bot.send_message(message.chat.id, f"{key} {value}")         
+            bot.send_message(message.chat.id, f"{key} {value}")
         with bot.retrieve_data(message.from_user.id, message.chat.id) as data:
             data['term_arrival'] = [value for value in unique_adds.values()]
-    
+
     bot.delete_state(message.from_user.id, message.chat.id)
     unique_adds = {}
-    for row in Routes.select().where((Routes.departure_station_id == f"{data['term_departure'][0]}") & 
-                                     (Routes.arrival_station_id ==  f"{data['term_arrival'][0]}")):
+    for row in Routes.select().where((Routes.departure_station_id == f"{data['term_departure'][0]}") &
+                                     (Routes.arrival_station_id == f"{data['term_arrival'][0]}")):
         unique_adds[row.departure_station_name] = row.departure_station_id
-        unique_adds[row.arrival_station_name] = row.arrival_station_id   
+        unique_adds[row.arrival_station_name] = row.arrival_station_id
     if unique_adds == {}:
-       bot.send_message(message.chat.id, "Увы! Но такого направления не найдено(")
-       return
-    stations =[]  
+        bot.send_message(message.chat.id, "Увы! Но такого направления не найдено(")
+        return
+    stations = []
     for key, value in unique_adds.items():
         stations.extend([key, value])
     bot.send_message(message.chat.id, "Немножко подождем...")
     bot.delete_state(message.from_user.id, message.chat.id)
-    
-    #Делаем запрос к серверу и парсим ответ 
+
+    # Делаем запрос к серверу и парсим ответ
     querystring = {'service': 'tutu_trains',
-                'term': stations[1],
-                'term2': stations[3]}
+                   'term': stations[1],
+                   'term2': stations[3]}
     parse = requests.get(URL, params=querystring)
     if parse.status_code in range(400, 500):
         bot.send_message(message.chat.id, "Сервер на отвечает! Зайдите позже.")
         return
-        
+
     parse_text = parse.text
     parse = dict(parse.json())
     stations_count = parse_text.count("arrivalStation", 0)
     cost_total = ""
-    
+
     for count in range(stations_count):
         name = 'None' if parse['trips'][count]['name'] in ('', None) else parse['trips'][count]['name']
         departure_station = f"{find_station_name(parse['trips'][count]['departureStation'])} ({parse['trips'][count]['departureStation']})"
@@ -138,10 +137,10 @@ def finish_get(message: object) -> None:
         categories = parse['trips'][count]['categories']
         cost = []
         for count in range(len(categories)):
-           cost.append((categories[count]['price'], categories[count]['type']))
+            cost.append((categories[count]['price'], categories[count]['type']))
         cost = sorted(cost)
         cost_end = f"({COST_LEVEL[f'{command}']}): {get_cost(cost, command)}"
-        cost_total += cost_end                                
+        cost_total += cost_end
         bot.send_photo(message.chat.id, photo=open(NAME_IMG[name], 'rb'))
         txt = f"""
             <b>Название поезда:</b> <i>{name if name != 'None' else 'БЕЗ НАЗВАНИЯ'}</i> 
@@ -156,12 +155,12 @@ def finish_get(message: object) -> None:
             <b>Конечная станция:</b> <i>{run_arrival_station}</i>\n 
             <b>Цена билета в категории</b> {cost_end}"""
         bot.send_message(message.chat.id, txt, parse_mode="html")
-    History.create(chat_id=message.chat.id, 
-            user_name=message.from_user.first_name, 
-            date=str(datetime.now())[:18],
-            command = f"{command}",
-            result = f"{departure_station} {arrival_station} {cost_total}")
-   
+    History.create(chat_id=message.chat.id,
+                   user_name=message.from_user.first_name,
+                   date=str(datetime.now())[:18],
+                   command=f"{command}",
+                   result=f"{departure_station} {arrival_station} {cost_total}")
+
 
 @bot.message_handler(commands=['direct'])
 def direct_departure(message: object) -> None:
@@ -179,35 +178,36 @@ def direct_term_departure_get(message: object) -> None:
     """Запрос ввода станции отправления"""
     with open(f'direct{message.from_user.id}.txt', 'w') as file:
         for row in Routes.select().where(Routes.departure_station_name % f"*{message.text}*"):
-            file.write(f"{row.departure_station_id} {row.departure_station_name} ---> {row.arrival_station_id} {row.arrival_station_name}\n")
+            file.write(
+                f"{row.departure_station_id} {row.departure_station_name} ---> {row.arrival_station_id} {row.arrival_station_name}\n")
     doc = open(f'direct{message.from_user.id}.txt', 'rb')
     bot.send_document(message.from_user.id, doc)
     doc.close()
     os.remove(f'direct{message.from_user.id}.txt')
     bot.delete_state(message.from_user.id, message.chat.id)
-    History.create(chat_id=message.chat.id, 
-                user_name=message.from_user.first_name, 
-                date=str(datetime.now())[:18],
-                command = "/direct",
-                result = f"Directed {row.departure_station_id} {row.departure_station_name}")
-    
-    
+    History.create(chat_id=message.chat.id,
+                   user_name=message.from_user.first_name,
+                   date=str(datetime.now())[:18],
+                   command="/direct",
+                   result=f"Directed {row.departure_station_id} {row.departure_station_name}")
+
+
 def get_unique_adds(msg: object) -> dict:
     """Функция проводит валидацию введенного кода станции"""
-    unique_adds = {}   
+    unique_adds = {}
     if msg.text.isdigit() and len(msg.text) == 7:
         for row in Routes.select().where(Routes.departure_station_id == f"{msg.text}"):
-            unique_adds[row.departure_station_name] = row.departure_station_id   
+            unique_adds[row.departure_station_name] = row.departure_station_id
         if unique_adds == {}:
             bot.send_message(msg.chat.id, "Такого кода не существует. Попробуйте еще")
             return {}
         else:
-            return unique_adds    
-   
+            return unique_adds
+
     elif msg.text.isdigit() and len(msg.text) != 7:
         bot.send_message(msg.chat.id, "Код должен содержать только 7 цифр. Попробуйте еще")
         return {}
-    
+
     elif msg.text.isdigit() == False:
         for row in Routes.select().where(Routes.departure_station_name % f"*{msg.text}*"):
             unique_adds[row.departure_station_name] = row.departure_station_id
@@ -216,14 +216,14 @@ def get_unique_adds(msg: object) -> dict:
             return {}
         else:
             return unique_adds
-        
+
 
 def find_station_name(station_id: str) -> str:
     """Функция возвращает название станции по id"""
     for row in Routes.select().where(Routes.departure_station_id == f"{station_id}"):
         return f"{row.departure_station_name}"
-    
- 
+
+
 def convert(seconds: int) -> str:
     """Функция преобразует время в секундах в hh:mm:ss"""
     seconds = seconds % (24 * 3600)

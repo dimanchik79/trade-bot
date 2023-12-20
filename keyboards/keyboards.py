@@ -15,7 +15,7 @@ def users_registtration(message: object) -> None:
     markup = types.InlineKeyboardMarkup()
     markup.add(types.InlineKeyboardButton('Вывести справку по командам бота?', callback_data="help"))
     user = [name for name in CurrentUser.select().where(CurrentUser.user_id == user_id)]
-    if user != []:
+    if user:
         bot.send_message(chat_id, f"С возвращением, <b>{user_name}</b>!!!", parse_mode='html', reply_markup=markup)
         answer = "Greeting a user"
     else:
@@ -23,13 +23,13 @@ def users_registtration(message: object) -> None:
         bot.send_message(chat_id, f"Привет, <b>{user_name}</b>!!! Ваш ID {user_id}", parse_mode='html')
         bot.send_message(chat_id, f"и Вы успешно зарегистрированы в системе!", parse_mode='html', reply_markup=markup)
         answer = "Registred a new user"
-    History.create(chat_id=message.chat.id, 
-                    user_name=message.from_user.first_name, 
-                    date=str(datetime.now())[:18],
-                    command = "/start",
-                    result = f"{answer} {message.from_user.first_name}")
+    History.create(chat_id=message.chat.id,
+                   user_name=message.from_user.first_name,
+                   date=str(datetime.now())[:18],
+                   command="/start",
+                   result=f"{answer} {message.from_user.first_name}")
 
-    
+
 @bot.message_handler(commands=["history"])
 def message_users(message: object) -> None:
     """Функция реализует команду бота history"""
@@ -48,13 +48,13 @@ def message_users(message: object) -> None:
             if count == 11:
                 break
     bot.send_message(message.chat.id, txt, parse_mode="html")
-    History.create(chat_id=message.chat.id, 
-                    user_name=message.chat.username, 
-                    date=str(datetime.now())[:18],
-                    command = message.text,
-                    result = "See last 10 command statistic...")
- 
- 
+    History.create(chat_id=message.chat.id,
+                   user_name=message.chat.username,
+                   date=str(datetime.now())[:18],
+                   command=message.text,
+                   result="See last 10 command statistic...")
+
+
 @bot.message_handler(commands=['exit'])
 def users_registtration(message: object) -> None:
     """Обработка команды leavebot"""
@@ -65,22 +65,22 @@ def users_registtration(message: object) -> None:
     btn_yes = types.InlineKeyboardButton('Да', callback_data="yes_exit")
     markup.add(btn_no, btn_yes)
     bot.send_message(message.chat.id, f"Вы действительно желаете покинуть бот?", reply_markup=markup)
-   
-   
+
+
 @bot.message_handler(commands=['help'])
 def help_command(message: object) -> None:
     """Обработка команды help"""
     if filter_unregistred_users(message):
         return
     bot.send_message(message.chat.id, HELP_TEXT, parse_mode='html')
-    History.create(chat_id=message.chat.id, 
-                    user_name=message.chat.username,
-                    date=str(datetime.now())[:18],
-                    command = "/help",
-                    result = f"Call help")
+    History.create(chat_id=message.chat.id,
+                   user_name=message.chat.username,
+                   date=str(datetime.now())[:18],
+                   command="/help",
+                   result=f"Call help")
 
 
-@bot.callback_query_handler(func=lambda callback: True) 
+@bot.callback_query_handler(func=lambda callback: True)
 def callback_message(callback: object) -> None:
     """Callbacks на кнопки"""
     if callback.data == 'help':
@@ -93,12 +93,12 @@ def callback_message(callback: object) -> None:
             return
         else:
             CurrentUser.get(CurrentUser.chat_id == chat_id).delete_instance()
-            History.create(chat_id=callback.message.chat.id, 
-                user_name=callback.message.chat.username, 
-                date=str(datetime.now())[:18],
-                command = "/exit",
-                result = f"User {callback.message.chat.username} exit the chat")
-            bot.send_message(chat_id, "Вы покинули бот...") 
+            History.create(chat_id=callback.message.chat.id,
+                           user_name=callback.message.chat.username,
+                           date=str(datetime.now())[:18],
+                           command="/exit",
+                           result=f"User {callback.message.chat.username} exit the chat")
+            bot.send_message(chat_id, "Вы покинули бот...")
 
 
 def filter_unregistred_users(msg: object) -> bool:
