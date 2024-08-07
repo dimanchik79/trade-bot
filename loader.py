@@ -1,6 +1,6 @@
 import telebot
-from config import *
+from config import TOKEN
 from telebot.storage import StateMemoryStorage
 
-#Иницилизируем бот
-bot = telebot.TeleBot(BOT_TOKEN, state_storage=StateMemoryStorage())
+# Иннициализируем бот
+bot = telebot.TeleBot(TOKEN, state_storage=StateMemoryStorage())
