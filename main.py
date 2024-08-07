@@ -1,5 +1,7 @@
 import threading
 from os import path
+from handlers.handlers import *
+from loader import *
 from utils.utils import *
 import database.models
 from telebot import custom_filters

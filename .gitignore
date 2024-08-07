@@ -160,3 +160,4 @@ cython_debug/
 #.idea/
 __pycache__
 venva.bat
+database/bot_base.db
