@@ -3,7 +3,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-TOKEN = os.getenv("my_token")
+TOKEN = os.getenv("MY_TOKEN")
 
 # API urls
 URL = "https://suggest.travelpayouts.com/search"
