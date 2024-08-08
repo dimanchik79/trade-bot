@@ -105,7 +105,7 @@ def filter_unregistred_users(msg: object) -> bool:
     """Функция определяет зарегистрирован ли пользовтель или нет"""
     chat_id = msg.chat.id
     user = [name for name in CurrentUser.select().where(CurrentUser.chat_id == chat_id)]
-    if user == []:
+    if not user:
         bot.send_message(chat_id, "Вы не зарегистрированы в системе.\nВыполните команду /start")
         return True
     else:
