@@ -8,7 +8,7 @@ from config import TEXT_ONE, TEXT_TWO, NAME_IMG, COST_LEVEL, VAGON
 import requests
 from config import URL
 import os
-from datetime import datetime
+from datetime import datetime, timedelta
 
 command = ''
 
@@ -49,46 +49,52 @@ def any_state(message: object) -> None:
 
 
 @bot.message_handler(state=MyStates.term_departure)
-def term_departure_get(message: object) -> None:
+def term_departure_get(message: object, msg=None) -> None:
     """Запрос ввода станции отправления"""
     unique_adds = get_unique_adds(message)
+    markup = types.ReplyKeyboardMarkup(row_width=1)
     if unique_adds == {}:
         bot.set_state(message.from_user.id, MyStates.term_departure, message.chat.id)
         return
     elif len(unique_adds) > 1:
         msg = "Давайте уточним:\n"
         for key, value in unique_adds.items():
-            msg += f"{key} {value}\n"
-        bot.send_message(message.chat.id, msg)
+            msg += f"{key} - {value}\n"
+            markup.add(types.KeyboardButton(f"{value}"))
+        bot.send_message(message.chat.id, msg, reply_markup=markup)
         bot.set_state(message.from_user.id, MyStates.term_departure, message.chat.id)
         return
+
     elif len(unique_adds) == 1:
-        bot.send_message(message.chat.id, f"Станция отправления:\n")
+        markup = types.ReplyKeyboardRemove()
+        bot.send_message(message.chat.id, "Станция отправления:\n", reply_markup=markup)
         for key, value in unique_adds.items():
             bot.send_message(message.chat.id, f"{key} {value}")
-
         with bot.retrieve_data(message.from_user.id, message.chat.id) as data:
             data['term_departure'] = [value for value in unique_adds.values()]
-        bot.send_message(message.chat.id, 'Введите код или название станции прибытия\n/cancel - отмена ввода')
-        bot.set_state(message.from_user.id, MyStates.term_arrival, message.chat.id)
+            bot.send_message(message.chat.id, 'Введите код или название станции прибытия\n/cancel - отмена ввода')
+            bot.set_state(message.from_user.id, MyStates.term_arrival, message.chat.id)
 
 
 @bot.message_handler(state=MyStates.term_arrival)
 def finish_get(message: object) -> None:
     """Запрос ввода станции назначения"""
     unique_adds = get_unique_adds(message)
+    markup = types.ReplyKeyboardMarkup(row_width=1)
     if unique_adds == {}:
         bot.set_state(message.from_user.id, MyStates.term_arrival, message.chat.id)
         return
     elif len(unique_adds) > 1:
         msg = "Давайте уточним:\n"
         for key, value in unique_adds.items():
-            msg += f"{key} {value}\n"
-        bot.send_message(message.chat.id, msg)
+            msg += f"{key} - {value}\n"
+            markup.add(types.KeyboardButton(f"{value}"))
+        bot.send_message(message.chat.id, msg, reply_markup=markup)
         bot.set_state(message.from_user.id, MyStates.term_arrival, message.chat.id)
         return
     elif len(unique_adds) == 1:
-        bot.send_message(message.chat.id, f"Станция прибытия:\n")
+        markup = types.ReplyKeyboardRemove()
+        bot.send_message(message.chat.id, f"Станция прибытия:\n", reply_markup=markup)
         for key, value in unique_adds.items():
             bot.send_message(message.chat.id, f"{key} {value}")
         with bot.retrieve_data(message.from_user.id, message.chat.id) as data:
@@ -119,6 +125,7 @@ def finish_get(message: object) -> None:
         return
 
     parse_text = parse.text
+    print(parse_text)
     parse = dict(parse.json())
     stations_count = parse_text.count("arrivalStation", 0)
     cost_total = ""
@@ -144,17 +151,17 @@ def finish_get(message: object) -> None:
         cost_total += cost_end
         bot.send_photo(message.chat.id, photo=open(NAME_IMG[name], 'rb'))
         txt = f"""
-            <b>Название поезда:</b> <i>{name if name != 'None' else 'БЕЗ НАЗВАНИЯ'}</i> 
-            <b>Номер поезда:</b> <i>{train_number}</i>
-            <b>Фирменный поезд:</b> <i>{firm}</i>
-            <b>Станция отправления:</b> <i>{departure_station}</i> 
-            <b>Станция прибытия:</b> <i>{arrival_station}</i>
-            <b>Время отправления:</b> <i>{departure_time}</i>
-            <b>Время прибытия:</b> <i>{arrival_time}</i>
-            <b>Время следования:</b> <i>{travel_time}</i> 
-            <b>Начальная станция:</b> <i>{run_departure_station}</i> 
-            <b>Конечная станция:</b> <i>{run_arrival_station}</i>\n 
-            <b>Цена билета в категории</b> {cost_end}"""
+        <b>Название поезда:</b> <i>{name if name != 'None' else 'БЕЗ НАЗВАНИЯ'}</i> 
+<b>Номер поезда:</b> <i>{train_number}</i>
+<b>Фирменный поезд:</b> <i>{firm}</i>
+<b>Станция отправления:</b> <i>{departure_station}</i> 
+<b>Станция прибытия:</b> <i>{arrival_station}</i>
+<b>Время отправления:</b> <i>{departure_time}</i>
+<b>Время прибытия:</b> <i>{arrival_time}</i>
+<b>Время следования:</b> <i>{travel_time}</i>
+<b>Начальная станция:</b> <i>{run_departure_station}</i> 
+<b>Конечная станция:</b> <i>{run_arrival_station}</i>\n 
+<b>Цена билета в категории</b> {cost_end}"""
         bot.send_message(message.chat.id, txt, parse_mode="html")
     History.create(chat_id=message.chat.id,
                    user_name=message.from_user.first_name,
@@ -227,12 +234,11 @@ def find_station_name(station_id: str) -> str:
 
 def convert(seconds: int) -> str:
     """Функция преобразует время в секундах в hh:mm:ss"""
-    seconds = seconds % (24 * 3600)
-    hour = seconds // 3600
-    seconds %= 3600
-    minutes = seconds // 60
-    seconds %= 60
-    return "%02d:%02d:%02d" % (hour, minutes, seconds)
+    time = timedelta(seconds=seconds)
+    day = time.days
+    hour, remainder = divmod(time.seconds, 3600)
+    minutes, seconds = divmod(remainder, 60)
+    return f"{day:02} д {hour:02} ч {minutes:02} мин {seconds:02} сек"
 
 
 def get_cost(diff_cost: list, comand_for: str) -> str:

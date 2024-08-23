@@ -20,22 +20,4 @@ def message_users(message) -> None:
                    command=message.text,
                    result="text message")
 
-    @bot.callback_query_handler(func=lambda callback: True)
-    def callback_message(callback: object) -> None:
-        """Callbacks на кнопки"""
-        if callback.data == 'help':
-            help_command(callback.message)
-        if callback.data == 'no_exit':
-            bot.send_message(callback.message.chat.id, "Мудрое решение!")
-        if callback.data == 'yes_exit':
-            chat_id = callback.message.chat.id
-            if filter_unregistred_users(callback.message):
-                return
-            else:
-                CurrentUser.get(CurrentUser.chat_id == chat_id).delete_instance()
-                History.create(chat_id=callback.message.chat.id,
-                               user_name=callback.message.chat.username,
-                               date=str(datetime.now())[:18],
-                               command="/exit",
-                               result=f"User {callback.message.chat.username} exit the chat")
-                bot.send_message(chat_id, "Вы покинули бот...")
+
