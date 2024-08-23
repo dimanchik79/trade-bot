@@ -1,9 +1,9 @@
 from telebot import types
 from telebot.handler_backends import State, StatesGroup
 from loader import bot
-from keyboards.keyboards import filter_unregistred_users, help_command
+from keyboards.keyboards import filter_unregistred_users
 from database.routes import Routes
-from database.models import History, CurrentUser
+from database.models import History
 from config import TEXT_ONE, TEXT_TWO, NAME_IMG, COST_LEVEL, VAGON
 import requests
 from config import URL

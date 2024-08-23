@@ -1,4 +1,3 @@
-from keyboards.keyboards import *
 from states.states import *
 from database.models import History
 
@@ -19,5 +18,3 @@ def message_users(message) -> None:
                    date=str(datetime.now()),
                    command=message.text,
                    result="text message")
-
-
