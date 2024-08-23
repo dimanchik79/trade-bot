@@ -125,7 +125,6 @@ def finish_get(message: object) -> None:
         return
 
     parse_text = parse.text
-    print(parse_text)
     parse = dict(parse.json())
     stations_count = parse_text.count("arrivalStation", 0)
     cost_total = ""
